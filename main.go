@@ -36,29 +36,4 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func init() {
-	todos = append(todos, Todo{
-		ID:        1,
-		Title:     "Learn Go",
-		Completed: false,
-	})
 
-	todos = append(todos, Todo{
-		ID:        2,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-
-	todos = append(todos, Todo{
-		ID:        3,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-
-	todos = append(todos, Todo{
-		ID:        4,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-	currentID = 4
-}

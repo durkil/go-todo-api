@@ -3,61 +3,38 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 func GetTodos(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(todos)
+	checkMethod(w, r, http.MethodGet)
+	sendJSONResponse(w, http.StatusCreated, todos)
 }
 
-func CreateTodos(w http.ResponseWriter, r* http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+func CreateTodos(w http.ResponseWriter, r *http.Request) {
+	checkMethod(w, r, http.MethodPost)
+	
 	var newTodo Todo
 
 	if err := json.NewDecoder(r.Body).Decode(&newTodo); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	currentID++
 	newTodo.ID = currentID
 
 	todos = append(todos, newTodo)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newTodo)
+	sendJSONResponse(w, http.StatusCreated, newTodo)
 }
 
 func GetTodoByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	id, err := strconv.Atoi(parts[2])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	checkMethod(w, r, http.MethodGet)
+
+	id := parseId(w, r)
 
 	for _, todo := range todos {
 		if todo.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(todo)
+			sendJSONResponse(w, http.StatusCreated, todo)
 			return
 		}
 	}
@@ -65,22 +42,9 @@ func GetTodoByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	checkMethod(w, r, http.MethodPut)
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.Atoi(parts[2])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	id := parseId(w, r)
 
 	var updatedTodo Todo
 	if err := json.NewDecoder(r.Body).Decode(&updatedTodo); err != nil {
@@ -90,10 +54,9 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 
 	for i := range todos {
 		if todos[i].ID == id {
-			updatedTodo.ID = id 
+			updatedTodo.ID = id
 			todos[i] = updatedTodo
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(updatedTodo)
+			sendJSONResponse(w, http.StatusCreated, updatedTodo)
 			return
 		}
 	}
@@ -101,22 +64,9 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteTodo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	checkMethod(w, r, http.MethodDelete)
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.Atoi(parts[2])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	id := parseId(w, r)
 
 	for i := range todos {
 		if todos[i].ID == id {
