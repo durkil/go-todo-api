@@ -1,38 +1,9 @@
 package main
 
+import "gorm.io/gorm"
+
 type Todo struct {
-	ID        int    `json:"id"`
+	gorm.Model
 	Title     string `json:"title"`
-	Completed bool   `json: "completed"`
-}
-
-var todos []Todo
-
-var currentID int
-
-func init() {
-	todos = append(todos, Todo{
-		ID:        1,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-
-	todos = append(todos, Todo{
-		ID:        2,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-
-	todos = append(todos, Todo{
-		ID:        3,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-
-	todos = append(todos, Todo{
-		ID:        4,
-		Title:     "Learn Go",
-		Completed: false,
-	})
-	currentID = len(todos)
+	Completed bool   `json:"completed" gorm:"default:false"`
 }

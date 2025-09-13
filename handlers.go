@@ -3,47 +3,49 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"gorm.io/gorm"
 )
+
+var DB *gorm.DB
 
 func GetTodos(w http.ResponseWriter, r *http.Request) {
 	checkMethod(w, r, http.MethodGet)
+	var todos []Todo
+	DB.Find(&todos)
 	sendJSONResponse(w, http.StatusCreated, todos)
 }
 
 func CreateTodos(w http.ResponseWriter, r *http.Request) {
 	checkMethod(w, r, http.MethodPost)
-	
 	var newTodo Todo
 
 	if err := json.NewDecoder(r.Body).Decode(&newTodo); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	currentID++
-	newTodo.ID = currentID
-
-	todos = append(todos, newTodo)
+	
+	DB.Create(&newTodo)
 
 	sendJSONResponse(w, http.StatusCreated, newTodo)
 }
 
 func GetTodoByID(w http.ResponseWriter, r *http.Request) {
 	checkMethod(w, r, http.MethodGet)
-
 	id := parseId(w, r)
 
-	for _, todo := range todos {
-		if todo.ID == id {
-			sendJSONResponse(w, http.StatusCreated, todo)
-			return
-		}
+	var todo Todo
+
+	result := DB.Find(&todo, id)
+
+	if result.Error != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	w.WriteHeader(http.StatusNotFound)
+	sendJSONResponse(w, http.StatusCreated, todo)
 }
 
 func UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodPut)
-
+	checkMethod(w, r, http.MethodPatch)
 	id := parseId(w, r)
 
 	var updatedTodo Todo
@@ -52,28 +54,32 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i := range todos {
-		if todos[i].ID == id {
-			updatedTodo.ID = id
-			todos[i] = updatedTodo
-			sendJSONResponse(w, http.StatusCreated, updatedTodo)
-			return
-		}
+	var todo Todo
+	result := DB.First(&todo, id)
+
+	if result.Error != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	w.WriteHeader(http.StatusNotFound)
+
+	DB.Model(&todo).Updates(&updatedTodo)
+	sendJSONResponse(w, http.StatusCreated, todo)
 }
 
 func DeleteTodo(w http.ResponseWriter, r *http.Request) {
 	checkMethod(w, r, http.MethodDelete)
-
 	id := parseId(w, r)
 
-	for i := range todos {
-		if todos[i].ID == id {
-			todos = append(todos[:i], todos[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	result := DB.Delete(&Todo{}, id)
+	if result != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	if result.RowsAffected == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	w.WriteHeader(http.StatusNotFound)
 }
