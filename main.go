@@ -7,6 +7,9 @@ import (
 )
 
 func main() {
+
+	DB = ConnectDB()
+
 	http.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimRight(r.URL.Path, "/")
 		if path == "/todos" {
