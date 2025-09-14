@@ -2,41 +2,21 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"strings"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 
 	DB = ConnectDB()
 
-	http.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimRight(r.URL.Path, "/")
-		if path == "/todos" {
-			switch r.Method {
-			case http.MethodGet:
-				GetTodos(w, r)
-			case http.MethodPost:
-				CreateTodos(w, r)
-			default:
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			}
-		} else {
-			switch r.Method {
-			case http.MethodGet:
-				GetTodoByID(w, r)
-			case http.MethodPut:
-				UpdateTodo(w, r)
-			case http.MethodDelete:
-				DeleteTodo(w, r)
-			default:
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			}
-		}
-	})
+	router := gin.Default()
+
+	router.GET("/todos", GetTodos)
+	router.POST("/todos", CreateTodos)
+	router.GET("/todos/:id", GetTodoByID)
+	router.PATCH("/todos/:id", UpdateTodo)
+	router.DELETE("/todos/:id", DeleteTodo)
 
 	log.Println("Server starting on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	router.Run(":8080")
 }
-
-

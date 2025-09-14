@@ -1,56 +1,52 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"gorm.io/gorm"
+	"github.com/gin-gonic/gin"
 )
 
 var DB *gorm.DB
 
-func GetTodos(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodGet)
+func GetTodos(c *gin.Context) {
 	var todos []Todo
 	DB.Find(&todos)
-	sendJSONResponse(w, http.StatusCreated, todos)
+	c.JSON(http.StatusOK, todos)
 }
 
-func CreateTodos(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodPost)
+func CreateTodos(c *gin.Context) {
 	var newTodo Todo
-
-	if err := json.NewDecoder(r.Body).Decode(&newTodo); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	
+	if err := c.BindJSON(&newTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	DB.Create(&newTodo)
 
-	sendJSONResponse(w, http.StatusCreated, newTodo)
+	DB.Create(&newTodo)
+	c.JSON(http.StatusCreated, newTodo)
 }
 
-func GetTodoByID(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodGet)
-	id := parseId(w, r)
+func GetTodoByID(c *gin.Context) {
+	id := c.Param("id")
 
 	var todo Todo
 
 	result := DB.Find(&todo, id)
 
 	if result.Error != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 		return
 	}
-	sendJSONResponse(w, http.StatusCreated, todo)
+	c.JSON(http.StatusOK, todo)
 }
 
-func UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodPatch)
-	id := parseId(w, r)
+func UpdateTodo(c *gin.Context) {
+	id := c.Param("id")
 
 	var updatedTodo Todo
-	if err := json.NewDecoder(r.Body).Decode(&updatedTodo); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+
+	if err := c.BindJSON(&updatedTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -58,28 +54,27 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	result := DB.First(&todo, id)
 
 	if result.Error != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Todo not found"})
 		return
 	}
 
 	DB.Model(&todo).Updates(&updatedTodo)
-	sendJSONResponse(w, http.StatusCreated, todo)
+	c.JSON(http.StatusOK, todo)
 }
 
-func DeleteTodo(w http.ResponseWriter, r *http.Request) {
-	checkMethod(w, r, http.MethodDelete)
-	id := parseId(w, r)
+func DeleteTodo(c *gin.Context) {
+	id := c.Param("id")
 
 	result := DB.Delete(&Todo{}, id)
-	if result != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error.Error()})
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		w.WriteHeader(http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 		return
 	}
 
-	w.WriteHeader(http.StatusNotFound)
+	c.Status(http.StatusNoContent)
 }
