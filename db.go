@@ -15,8 +15,6 @@ func ConnectDB() *gorm.DB {
 		log.Fatal("Error connecting to db: ", err)
 	}
 
-	db.AutoMigrate(&Todo{})
-
 	fmt.Println("DB connection is successful!")
 	return db
 }
