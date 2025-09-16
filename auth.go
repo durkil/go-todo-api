@@ -112,8 +112,15 @@ func GithubCallbackHandler(c *gin.Context) {
 		DB.Save(&user)
 	}
 
+	jwtToken, err := GenerateJWT(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully authenticated with GitHub",
+		"token": jwtToken,
 		"user": gin.H{
 			"id":       user.ID,
 			"username": user.Username,
