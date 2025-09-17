@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors" 
 	"github.com/joho/godotenv"
 )
 
@@ -13,7 +14,6 @@ func main() {
 	}
 
 	log.Printf("GITHUB_CLIENT_ID: '%s'", os.Getenv("GITHUB_CLIENT_ID"))
-	log.Printf("GITHUB_CLIENT_SECRET: '%s'", os.Getenv("GITHUB_CLIENT_SECRET"))
 	log.Printf("GITHUB_REDIRECT_URL: '%s'", os.Getenv("GITHUB_REDIRECT_URL"))
 
 	InitOAuthConfig()
@@ -27,6 +27,14 @@ func main() {
 	DB.AutoMigrate(&Todo{}, &User{})
 
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"}, 
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+    }))
 
 	router.GET("/auth/github", GithubLoginHandler)
 	router.GET("/auth/github/callback", GithubCallbackHandler)
