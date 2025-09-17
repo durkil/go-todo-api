@@ -9,29 +9,34 @@ import (
 var DB *gorm.DB
 
 func GetTodos(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
 	var todos []Todo
-	DB.Find(&todos)
+	DB.Where("user_id = ?", userID).Find(&todos)
 	c.JSON(http.StatusOK, todos)
 }
 
 func CreateTodos(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
 	var newTodo Todo
-	
 	if err := c.BindJSON(&newTodo); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	newTodo.UserID = userID.(uint)
 	DB.Create(&newTodo)
 	c.JSON(http.StatusCreated, newTodo)
 }
 
 func GetTodoByID(c *gin.Context) {
+	userID, _ := c.Get("userID")
 	id := c.Param("id")
 
 	var todo Todo
 
-	result := DB.Find(&todo, id)
+	result := DB.Where("user_id = ? AND id = ?", userID, id).First(&todo)
 
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
@@ -41,6 +46,7 @@ func GetTodoByID(c *gin.Context) {
 }
 
 func UpdateTodo(c *gin.Context) {
+	userID, _ := c.Get("userID")
 	id := c.Param("id")
 
 	var updatedTodo Todo
@@ -51,7 +57,7 @@ func UpdateTodo(c *gin.Context) {
 	}
 
 	var todo Todo
-	result := DB.First(&todo, id)
+	result := DB.Where("user_id = ? AND id = ?", userID, id).First(&todo)
 
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Todo not found"})
@@ -63,9 +69,10 @@ func UpdateTodo(c *gin.Context) {
 }
 
 func DeleteTodo(c *gin.Context) {
+	userID, _ := c.Get("userID")
 	id := c.Param("id")
 
-	result := DB.Delete(&Todo{}, id)
+	result := DB.Where("user_id = ? AND id = ?", userID, id).Delete(&Todo{}, id)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error.Error()})
 		return
