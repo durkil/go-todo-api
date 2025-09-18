@@ -4,7 +4,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DATABASE_URL=host=db user=user password=password dbname=gotodo port=5432 sslmode=disable
       - DB_HOST=db
@@ -20,6 +21,11 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d gotodo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db_data:

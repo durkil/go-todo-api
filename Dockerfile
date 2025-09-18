@@ -1,4 +1,3 @@
-# Використання офіційного образу Go
 FROM golang:1.24.1
 
 WORKDIR /app

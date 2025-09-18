@@ -32,6 +32,14 @@ func InitOAuthConfig() {
 	}
 }
 
+// GithubLoginHandler godoc
+// @Summary GitHub OAuth login
+// @Description Initiate GitHub OAuth authentication flow
+// @Tags authentication
+// @Produce json
+// @Success 307 {string} string "Redirect to GitHub"
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/github [get]
 func GithubLoginHandler(c *gin.Context) {
 	log.Println("=== GitHub Login Handler Called ===")
 
@@ -47,6 +55,17 @@ func GithubLoginHandler(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// GithubCallbackHandler godoc
+// @Summary GitHub OAuth callback
+// @Description Handle GitHub OAuth callback and return JWT token
+// @Tags authentication
+// @Produce json
+// @Param code query string true "GitHub authorization code"
+// @Param state query string true "OAuth state parameter"
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/github/callback [get]
 func GithubCallbackHandler(c *gin.Context) {
 	log.Println("=== GitHub Callback Handler Called ===")
 
@@ -120,7 +139,7 @@ func GithubCallbackHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully authenticated with GitHub",
-		"token": jwtToken,
+		"token":   jwtToken,
 		"user": gin.H{
 			"id":       user.ID,
 			"username": user.Username,
